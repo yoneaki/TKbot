@@ -4,7 +4,7 @@ import time
 # from threading import (Event, Thread)
 import threading
 
-TOKEN = 'NzQ4MTU0MTkyNjY0NzIzNDU4.X0ZS4w.n5PqH_vLr6fQgYg5_H3mZg_0dZo'
+TOKEN = 'TOKEN'  # TOKENを入力
 client = discord.Client()
 
 base_interval = 0
