@@ -12,6 +12,9 @@ client = discord.Client()
 loop = asyncio.get_event_loop()
 endtk = threading.Event()
 
+base_interval_stand_by = 0
+shorter_time_stand_by = 0
+dead_time_stand_by = 0
 base_interval = 0
 shorter_time = 0
 dead_time = 0
@@ -33,12 +36,12 @@ async def on_message(message):
         # メッセージを空白ごとに要素分けし、base_interval、shorter_time、dead_timeのそれぞれに代入
         msg = message.content
         a = msg.split()
-        global base_interval, shorter_time, dead_time
-        base_interval = int(a[1])
-        shorter_time = int(a[2])
-        dead_time = int(a[3])
+        global base_interval_stand_by, shorter_time_stand_by, dead_time_stand_by
+        base_interval_stand_by = int(a[1])
+        shorter_time_stand_by = int(a[2])
+        dead_time_stand_by = int(a[3])
         # 内容確認用表示
-        await message.channel.send(f'base_interval = {base_interval} shorter_time = {shorter_time} dead_time = {dead_time}')
+        await message.channel.send(f'base_interval = {base_interval_stand_by} shorter_time = {shorter_time_stand_by} dead_time = {dead_time_stand_by}')
     elif message.content == '!starttk':
         # スレッド作成&開始
         th = threading.Thread(target=up_timer, args=(endtk, message))
@@ -48,19 +51,21 @@ async def on_message(message):
     elif message.content == ('!endtk'):
         endtk.set()
         print('スレッド終了')
-    elif message.content == ('!cleartk'):
-        base_interval = 0
-        shorter_time = 0
-        dead_time = 0
 
 # カウントアップタイマー処理
 def up_timer(endtk, message):
+    global base_interval, shorter_time, dead_time
+    base_interval = base_interval_stand_by
+    shorter_time = shorter_time_stand_by
+    dead_time = dead_time_stand_by
     i = 0
     while True:
         if i == dead_time:
             _send_msg(message, f'**{i}**')
         elif i >= shorter_time:
             _send_msg(message, f'{i}')
+        elif i == 0:
+            _send_msg(message, 'タイマースタート')
         elif i % base_interval == 0:
             _send_msg(message, f'{i}')
         print(i)
@@ -69,10 +74,13 @@ def up_timer(endtk, message):
         if endtk.wait(timeout=1):
             _send_msg(message, 'タイマー停止')
             print('タイマー停止')
+            endtk.clear()
             break
         elif i > dead_time * 3:
             endtk.set()
+            _send_msg(message, 'タイマー停止')
             print('スレッド終了')
+            endtk.clear()
             break
 
 # 実際のメッセージ送信する処理
