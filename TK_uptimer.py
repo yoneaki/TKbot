@@ -1,90 +1,74 @@
 import os
-import discord
 import asyncio
-import time
-# from threading import (Event, Thread)
-import threading
+from discord.ext import commands
 
-# 環境変数にDISCORD_BOT_TOKEN=xxxと追加しておくと楽になる
-TOKEN = os.environ['DISCORD_BOT_TOKEN']
-client = discord.Client()
-# スレッド内でメッセージ送信するために必要らしい
-loop = asyncio.get_event_loop()
-endtk = threading.Event()
+bot = commands.Bot(command_prefix='!')
+token = os.environ['DISCORD_BOT_TOKEN']
 
+loop = True
+is_running = False
 base_interval_stand_by = 0
 shorter_time_stand_by = 0
 dead_time_stand_by = 0
-base_interval = 0
-shorter_time = 0
-dead_time = 0
 
-@client.event
-async def on_ready():
-    # 起動したらターミナルにログイン通知が表示される
-    print('ログインしました')
-
-# メッセージ受信時に動作する処理
-@client.event
-async def on_message(message):
-    # メッセージ送信者がBotだった場合は無視する
-    if message.author.bot:
+# タイマーのセット
+@bot.command()
+async def settk(ctx, *args):
+    if ctx.author.bot:
         return
-    elif message.content == '!isrunning':
-        await message.channel.send('I\'m ready!')
-    elif message.content.startswith('!settk'):
-        # メッセージを空白ごとに要素分けし、base_interval、shorter_time、dead_timeのそれぞれに代入
-        msg = message.content
-        a = msg.split()
-        global base_interval_stand_by, shorter_time_stand_by, dead_time_stand_by
-        base_interval_stand_by = int(a[1])
-        shorter_time_stand_by = int(a[2])
-        dead_time_stand_by = int(a[3])
-        # 内容確認用表示
-        await message.channel.send(f'base_interval = {base_interval_stand_by} shorter_time = {shorter_time_stand_by} dead_time = {dead_time_stand_by}')
-    elif message.content == '!starttk':
-        # スレッド作成&開始
-        th = threading.Thread(target=up_timer, args=(endtk, message))
-        th.start()
-        print('スレッド開始')
-    # グローバル変数で処理しないとendtkがないのでエラーになると思う
-    elif message.content == ('!endtk'):
-        endtk.set()
-        print('スレッド終了')
+    global base_interval_stand_by, shorter_time_stand_by, dead_time_stand_by
+    base_interval_stand_by = int(args[0])
+    shorter_time_stand_by = int(args[1])
+    dead_time_stand_by = int(args[2])
+    # 内容確認用表示
+    await ctx.send(f'base_interval = {base_interval_stand_by} shorter_time = {shorter_time_stand_by} dead_time = {dead_time_stand_by}')
 
-# カウントアップタイマー処理
-def up_timer(endtk, message):
-    global base_interval, shorter_time, dead_time
+# タイマーのスタート
+@bot.command()
+async def starttk(ctx):
+    if ctx.author.bot:
+        return
+    global loop, base_interval, shorter_time, dead_time, is_running
     base_interval = base_interval_stand_by
     shorter_time = shorter_time_stand_by
     dead_time = dead_time_stand_by
-    i = 0
-    while True:
-        if i == dead_time:
-            _send_msg(message, f'**{i}**')
-        elif i >= shorter_time:
-            _send_msg(message, f'{i}')
-        elif i == 0:
-            _send_msg(message, 'タイマースタート')
-        elif i % base_interval == 0:
-            _send_msg(message, f'{i}')
-        print(i)
-        i += 1
-        # 多分endtk.waitで処理が止まってるけどそこは未解決
-        if endtk.wait(timeout=1):
-            _send_msg(message, 'タイマー停止')
-            print('タイマー停止')
-            endtk.clear()
+    loop = True
+    timer_count = 0
+    is_running = True
+    await ctx.send('タイマースタート')
+    while loop:
+        timer_count += 1
+        if timer_count >= dead_time * 3:
+            await ctx.send(f'**{timer_count}**')
+            loop = False
             break
-        elif i > dead_time * 3:
-            endtk.set()
-            _send_msg(message, 'タイマー停止')
-            print('スレッド終了')
-            endtk.clear()
-            break
+        elif timer_count == dead_time:
+            await ctx.send(f'**{timer_count}**')
+        elif timer_count >= shorter_time:
+            await ctx.send(f'{timer_count}')
+        elif timer_count % base_interval == 0:
+           await ctx.send(f'{timer_count}')
+        await asyncio.sleep(1)
+    is_running = False
+    await ctx.send('タイマーストップ')
 
-# 実際のメッセージ送信する処理
-def _send_msg(message, text):
-    asyncio.ensure_future(message.channel.send(text), loop=loop)
+# タイマーのストップ
+@bot.command()
+async def endtk(ctx):
+    if ctx.author.bot:
+        return
+    global loop
+    loop = False
 
-client.run(TOKEN)
+# タイマーの生存確認
+@bot.command()
+async def isrunning(ctx):
+    if ctx.author.bot:
+        return
+    global is_running
+    if is_running:
+        await ctx.send('timer is running!')
+    else:
+        await ctx.send('timer is not running!')
+
+bot.run(token)
