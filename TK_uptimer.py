@@ -29,26 +29,27 @@ async def starttk(ctx):
     if ctx.author.bot:
         return
     global loop, base_interval, shorter_time, dead_time, is_running
-    base_interval = base_interval_stand_by
-    shorter_time = shorter_time_stand_by
-    dead_time = dead_time_stand_by
+    base_interval = base_interval_stand_by * 60
+    shorter_time = shorter_time_stand_by * 60
+    dead_time = dead_time_stand_by * 60
     loop = True
     timer_count = 0
     is_running = True
-    await ctx.send('タイマースタート')
     while loop:
-        timer_count += 1
         if timer_count >= dead_time * 3:
-            await ctx.send(f'**{timer_count}**')
+            await ctx.send(f'**{int(timer_count / 60)}**')
             loop = False
             break
         elif timer_count == dead_time:
-            await ctx.send(f'**{timer_count}**')
-        elif timer_count >= shorter_time:
-            await ctx.send(f'{timer_count}')
+            await ctx.send(f'**{int(timer_count / 60)}**')
+        elif timer_count >= shorter_time and timer_count % 60 == 0:
+            await ctx.send(f'{int(timer_count / 60)}')
+        elif timer_count == 0:
+            await ctx.send('タイマースタート')
         elif timer_count % base_interval == 0:
-           await ctx.send(f'{timer_count}')
+           await ctx.send(f'{int(timer_count // 60)}')
         await asyncio.sleep(1)
+        timer_count += 1
     is_running = False
     await ctx.send('タイマーストップ')
 
@@ -65,10 +66,6 @@ async def endtk(ctx):
 async def isrunning(ctx):
     if ctx.author.bot:
         return
-    global is_running
-    if is_running:
-        await ctx.send('timer is running!')
-    else:
-        await ctx.send('timer is not running!')
+    await ctx.send('I\'m ready!')
 
 bot.run(token)
