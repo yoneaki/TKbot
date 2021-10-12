@@ -7,47 +7,35 @@ token = os.environ['DISCORD_BOT_TOKEN']
 
 loop = True
 is_running = False
-base_interval_stand_by = 0
-shorter_time_stand_by = 0
-dead_time_stand_by = 0
-
-# タイマーのセット
-# @bot.command()
-# async def settk(ctx, *args):
-#     if ctx.author.bot:
-#         return
-#     global base_interval_stand_by, shorter_time_stand_by, dead_time_stand_by
-#     base_interval_stand_by = int(args[0])
-#     shorter_time_stand_by = int(args[1])
-#     dead_time_stand_by = int(args[2])
-#     # 内容確認用表示
-#     await ctx.send(f'base_interval = {base_interval_stand_by} shorter_time = {shorter_time_stand_by} dead_time = {dead_time_stand_by}')
 
 # タイマーのスタート
 @bot.command()
 async def starttk(ctx ,*args):
     if ctx.author.bot:
         return
-    global loop, base_interval, shorter_time, dead_time, is_running
-    base_interval = int(args[0]) * 60
-    shorter_time = int(args[1]) * 60
-    dead_time = int(args[2]) * 60
+    global loop,is_running
+    base_interval_min = int(args[0])
+    shorter_time_min = int(args[1])
+    dead_time_min = int(args[2])
+    base_interval_sec = base_interval_min * 60
+    shorter_time_sec = shorter_time_min * 60
+    dead_time_sec = shorter_time_min * 60
     loop = True
     timer_count = 0
     is_running = True
-    await ctx.send(f'base_interval = {base_interval_stand_by} shorter_time = {shorter_time_stand_by} dead_time = {dead_time_stand_by}')
+    await ctx.send(f'base_interval = {base_interval_min} shorter_time = {shorter_time_min} dead_time = {dead_time_min}')
     while loop:
         if timer_count == 0:
             await ctx.send('タイマースタート')
-        elif timer_count >= dead_time * 3:
+        elif timer_count >= dead_time_sec * 3:
             await ctx.send(f'**{int(timer_count / 60)}**')
             loop = False
             break
-        elif timer_count == dead_time:
+        elif timer_count == dead_time_sec:
             await ctx.send(f'**{int(timer_count / 60)}**')
-        elif timer_count >= shorter_time and timer_count % 60 == 0:
+        elif timer_count >= shorter_time_sec and timer_count % 60 == 0:
             await ctx.send(f'{int(timer_count / 60)}')
-        elif timer_count % base_interval == 0:
+        elif timer_count % base_interval_sec == 0:
            await ctx.send(f'{int(timer_count // 60)}')
         await asyncio.sleep(1)
         timer_count += 1
