@@ -19,7 +19,7 @@ async def starttk(ctx ,*args):
     dead_time_min = int(args[2])
     base_interval_sec = base_interval_min * 60
     shorter_time_sec = shorter_time_min * 60
-    dead_time_sec = shorter_time_min * 60
+    dead_time_sec = dead_time_min * 60
     loop = True
     timer_count = 0
     is_running = True
