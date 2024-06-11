@@ -27,7 +27,7 @@ async def starttk(ctx ,*args):
     while loop:
         if timer_count == 0:
             await ctx.send('タイマースタート')
-        elif timer_count >= dead_time_sec * 3:
+        elif timer_count >= dead_time_sec * 4:
             await ctx.send(f'**{int(timer_count / 60)}**')
             loop = False
             break
@@ -36,7 +36,7 @@ async def starttk(ctx ,*args):
         elif timer_count >= shorter_time_sec and timer_count % 60 == 0:
             await ctx.send(f'{int(timer_count / 60)}')
         elif timer_count % base_interval_sec == 0:
-           await ctx.send(f'{int(timer_count // 60)}')
+           await ctx.send(f'{int(timer_count / 60)}')
         await asyncio.sleep(1)
         timer_count += 1
     is_running = False
